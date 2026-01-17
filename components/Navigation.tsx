@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const navItems = [
     { name: "홈", href: "/", icon: Home },
     { name: "문학 지도", href: "/map", icon: Map },
-    { name: "학습하기", href: "/chapter/1", icon: BookOpen }, // Default to Ch1 for easy access
+    { name: "학습하기", href: "/quiz", icon: BookOpen },
 ];
 
 export default function Navigation() {
