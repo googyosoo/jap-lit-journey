@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import React from "react";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import CultureSection from "@/components/CultureSection";
+import ExerciseSection from "@/components/ExerciseSection";
 
 export default function ChapterPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = React.use(params);
@@ -190,81 +191,7 @@ export default function ChapterPage({ params }: { params: Promise<{ id: string }
                         )}
 
                         {activeTab === "exercises" && (
-                            <div className="space-y-8">
-                                <div className="flex items-center justify-between">
-                                    <h2 className="text-xl font-bold text-indigo-900 flex items-center gap-2">
-                                        <PenTool className="text-sakura-500" /> 연습 문제
-                                    </h2>
-                                    <div className="text-sm font-bold text-stone-500 bg-stone-100 px-3 py-1 rounded-full">
-                                        맞춘 개수: {chapter.sections.exercises.filter((ex, idx) => answers[idx] === ex.answer).length} / {chapter.sections.exercises.length}
-                                    </div>
-                                </div>
-
-                                {chapter.sections.exercises.map((ex, idx) => {
-                                    const isAnswered = answers[idx] !== undefined;
-                                    const isCorrect = answers[idx] === ex.answer;
-
-                                    return (
-                                        <div key={idx} className={cn(
-                                            "border rounded-xl p-6 transition-all duration-500",
-                                            isAnswered
-                                                ? (isCorrect ? "bg-green-50/50 border-green-200" : "bg-red-50/50 border-red-200")
-                                                : "bg-white border-stone-200"
-                                        )}>
-                                            <div className="flex justify-between items-start mb-4">
-                                                <p className="font-bold text-lg text-stone-800">Q. {ex.question}</p>
-                                                {isAnswered && (
-                                                    <span className={cn(
-                                                        "px-3 py-1 rounded-full text-xs font-bold animate-pulse",
-                                                        isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                                                    )}>
-                                                        {isCorrect ? "정답! ⭕" : "오답 ❌"}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {ex.options.map((opt, optIdx) => {
-                                                    const isSelected = answers[idx] === optIdx;
-                                                    // If answered, highlight the correct answer Green, and if selected wrong, Red
-                                                    const isThisCorrect = optIdx === ex.answer;
-
-                                                    let buttonStyle = "border-stone-200 hover:bg-stone-50";
-                                                    if (isAnswered) {
-                                                        if (isThisCorrect) buttonStyle = "bg-green-100 border-green-300 text-green-800 font-bold";
-                                                        else if (isSelected && !isCorrect) buttonStyle = "bg-red-100 border-red-300 text-red-800";
-                                                        else buttonStyle = "opacity-50 border-stone-100";
-                                                    } else {
-                                                        buttonStyle = "hover:border-sakura-300 hover:bg-sakura-50";
-                                                    }
-
-                                                    return (
-                                                        <button
-                                                            key={optIdx}
-                                                            className={cn(
-                                                                "text-left px-4 py-3 rounded-lg border transition-all",
-                                                                buttonStyle
-                                                            )}
-                                                            disabled={isAnswered}
-                                                            onClick={() => setAnswers(prev => ({ ...prev, [idx]: optIdx }))}
-                                                        >
-                                                            <span className="inline-block w-6 h-6 rounded-full bg-white border border-stone-200 text-center text-xs leading-5 mr-2 shadow-sm text-stone-500">
-                                                                {optIdx + 1}
-                                                            </span>
-                                                            {opt}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                            {isAnswered && !isCorrect && (
-                                                <div className="mt-4 text-sm text-stone-500 bg-white/50 p-3 rounded-lg border border-stone-100">
-                                                    정답은 <span className="font-bold text-indigo-600">{Number(ex.answer) + 1}번</span> 입니다.
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-                                })}
-                            </div>
+                            <ExerciseSection exercises={chapter.sections.exercises} />
                         )}
 
                         {activeTab === "culture" && (
