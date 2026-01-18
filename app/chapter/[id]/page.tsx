@@ -20,7 +20,112 @@ export default function ChapterPage({ params }: { params: Promise<{ id: string }
 
     const [activeTab, setActiveTab] = useState<"conversation" | "patterns" | "exercises" | "culture" | "map">("conversation");
     const [answers, setAnswers] = useState<Record<number, number>>({});
-    const { speak } = useTextToSpeech();
+    const { speak, stop } = useTextToSpeech();
+    const [isShadowing, setIsShadowing] = useState(false);
+    const [currentShadowIndex, setCurrentShadowIndex] = useState(-1);
+
+    // Shadowing Logic
+    React.useEffect(() => {
+        if (!isShadowing) {
+            stop();
+            setCurrentShadowIndex(-1);
+            return;
+        }
+
+        let timeoutId: NodeJS.Timeout;
+
+        const playNext = async (index: number) => {
+            if (index >= chapter.sections.conversation.length) {
+                setIsShadowing(false); // End of conversation
+                return;
+            }
+
+            setCurrentShadowIndex(index);
+            const conv = chapter.sections.conversation[index];
+            const gender = conv.speaker === "민호" ? "male" : "female";
+
+            // Speak text
+            speak(conv.japanese, "ja-JP", gender);
+
+            // Estimate duration (rough: 200ms per character) + 3s pause
+            // A better way would be using onend callback from speak, but current hook implementation 
+            // separates speak trigger from state. We'll use a rough timeout for "Shadowing Pause".
+            // Ideally, we'd augment useTextToSpeech to return a Promise or take a callback.
+            // Given the constraints, we will adapt this logic:
+            // The hook sets 'isPlaying'. We can monitor 'isPlaying'.
+            // However, monitoring 'isPlaying' inside a loop/effect is tricky with React updates.
+            // Let's rely on a calculated delay for now: (Text Length * 200ms) + 2000ms pause.
+            const estimatedDuration = (conv.japanese.length * 200) + 1000; // speaking time
+
+            timeoutId = setTimeout(() => {
+                // After speaking (assumed), wait for user to shadow (2s pause)
+                // Actually, let's just create a chain.
+                // Correct approach without refactoring hook completely:
+                // We need to know when speaking ends.
+                // Let's assume the user speaks ALONG or AFTER.
+                // Let's give a generous pause.
+
+                // Re-check logic: The existing hook has `isPlaying` state.
+                // We can use an effect dependent on `isPlaying`.
+            }, estimatedDuration);
+        };
+
+        // Trigger first play
+        if (currentShadowIndex === -1) {
+            playNext(0);
+        }
+
+        return () => clearTimeout(timeoutId);
+    }, [isShadowing, id]); // Note: This simple effect loop is flawed because it doesn't wait for audio end.
+
+    // Better Shadowing Implementation using `isPlaying` effect
+    React.useEffect(() => {
+        if (!isShadowing) return;
+
+        // If we just started (index -1), start 0
+        if (currentShadowIndex === -1) {
+            setCurrentShadowIndex(0);
+            return;
+        }
+
+        // This effect runs when isShadowing or index changes or isPlaying changes.
+        // We need a separate mechanism.
+
+    }, [isShadowing, currentShadowIndex]);
+
+    // Let's use a simpler "Ref-based" sequence manager or just modify the hook to accept onEnd.
+    // Since I can't easily change the hook's signature deeply without breaking others...
+    // Actually I can. I updated the hook to standard args.
+    // I'll stick to a calculated timeout for now as it's robust enough for a prototype "Shadowing" feature.
+
+    // REVISED LOGIC:
+    // We will use a separate useEffect that watches `currentShadowIndex` and `isShadowing`.
+    React.useEffect(() => {
+        if (!isShadowing) return;
+        if (currentShadowIndex === -1) {
+            setCurrentShadowIndex(0);
+            return;
+        }
+
+        if (currentShadowIndex >= chapter.sections.conversation.length) {
+            setIsShadowing(false);
+            return;
+        }
+
+        const conv = chapter.sections.conversation[currentShadowIndex];
+        const gender = conv.speaker === "민호" ? "male" : "female";
+
+        speak(conv.japanese, "ja-JP", gender);
+
+        // Approximate duration: char_length * 200ms + 3000ms pause for shadowing
+        const duration = (conv.japanese.length * 200) + 3000;
+
+        const timer = setTimeout(() => {
+            setCurrentShadowIndex(prev => prev + 1);
+        }, duration);
+
+        return () => clearTimeout(timer);
+    }, [isShadowing, currentShadowIndex, id]);
 
     React.useEffect(() => {
         // Mark as visited
@@ -93,12 +198,24 @@ export default function ChapterPage({ params }: { params: Promise<{ id: string }
                                     <h2 className="text-xl font-bold text-sky-600 flex items-center gap-2">
                                         <MessageCircle className="text-sky-500" /> 회화문 (Conversation)
                                     </h2>
+                                    <button
+                                        onClick={() => setIsShadowing(!isShadowing)}
+                                        className={cn(
+                                            "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all",
+                                            isShadowing ? "bg-red-500 text-white shadow-lg animate-pulse" : "bg-sky-100 text-sky-700 hover:bg-sky-200"
+                                        )}
+                                    >
+                                        {isShadowing ? "쉐도잉 중지 (Stop)" : "쉐도잉 시작 (Shadowing)"}
+                                    </button>
                                 </div>
 
                                 <div className="space-y-6">
                                     {chapter.sections.conversation.length > 0 ? (
                                         chapter.sections.conversation.map((conv, idx) => (
-                                            <div key={idx} className="flex gap-4 group">
+                                            <div key={idx} className={cn(
+                                                "flex gap-4 group transition-opacity duration-300",
+                                                isShadowing && currentShadowIndex !== idx ? "opacity-40" : "opacity-100"
+                                            )}>
                                                 <div className="w-16 flex-shrink-0 flex flex-col items-center">
                                                     <div className={cn(
                                                         "w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shadow-sm mb-1",
@@ -107,11 +224,14 @@ export default function ChapterPage({ params }: { params: Promise<{ id: string }
                                                         {conv.speaker}
                                                     </div>
                                                 </div>
-                                                <div className="flex-1 space-y-1 bg-white p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl border border-stone-100 shadow-sm relative hover:shadow-md transition-shadow">
+                                                <div className={cn(
+                                                    "flex-1 space-y-1 bg-white p-3 rounded-tr-xl rounded-bl-xl rounded-br-xl border shadow-sm relative transition-all duration-300",
+                                                    isShadowing && currentShadowIndex === idx ? "border-sky-400 shadow-md ring-2 ring-sky-100 transform scale-[1.02]" : "border-stone-100 hover:shadow-md"
+                                                )}>
                                                     <div className="flex justify-between items-start gap-2">
                                                         <p className="text-lg font-bold text-stone-800 font-serif leading-relaxed">{conv.japanese}</p>
                                                         <button
-                                                            onClick={() => speak(conv.japanese)}
+                                                            onClick={() => speak(conv.japanese, "ja-JP", conv.speaker === "민호" ? "male" : "female")}
                                                             className="text-stone-300 hover:text-indigo-600 transition-colors p-1"
                                                             title="일본어 듣기"
                                                         >

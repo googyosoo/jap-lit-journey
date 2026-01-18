@@ -1,20 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Pattern } from "@/lib/data";
-import { Volume2 } from "lucide-react";
+import { Volume2, Star } from "lucide-react";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
 // Assuming Pattern interface is available or I'll define a compatible prop type
 interface FlashcardProps {
-    pattern: Pattern;
+    pattern: Pattern & { id?: string }; // Make sure ID is available for bookmarking
     chapterTitle?: string;
 }
 
 export default function Flashcard({ pattern, chapterTitle }: FlashcardProps) {
     const [isFlipped, setIsFlipped] = useState(false);
+    const [isBookmarked, setIsBookmarked] = useState(false);
     const { speak } = useTextToSpeech();
+
+    // Pattern ID generation if missing (fallback)
+    const patternId = pattern.id || pattern.title;
+
+    useEffect(() => {
+        // Load bookmark state
+        try {
+            const stored = localStorage.getItem("bookmarkedPatterns");
+            if (stored) {
+                const bookmarks = JSON.parse(stored);
+                setIsBookmarked(bookmarks.includes(patternId));
+            }
+        } catch (e) {
+            console.error("Failed to load bookmarks", e);
+        }
+    }, [patternId]);
 
     const handleclick = () => {
         setIsFlipped(!isFlipped);
@@ -22,12 +39,27 @@ export default function Flashcard({ pattern, chapterTitle }: FlashcardProps) {
 
     const handleSpeak = (e: React.MouseEvent) => {
         e.stopPropagation();
-        // Speak the title (Japanese)
-        // Extract text from title if it contains Kanji/Kana, or just speak the whole title
-        // The title often has format "～ば (~면)", so we might want to split it.
-        // Simple heuristic: speak until the first open parenthesis if present, else speak whole.
         const textToSpeak = (pattern.title || pattern.pattern || "").split('(')[0].trim();
         speak(textToSpeak);
+    };
+
+    const toggleBookmark = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            const stored = localStorage.getItem("bookmarkedPatterns");
+            let bookmarks = stored ? JSON.parse(stored) : [];
+
+            if (isBookmarked) {
+                bookmarks = bookmarks.filter((id: string) => id !== patternId);
+            } else {
+                bookmarks.push(patternId);
+            }
+
+            localStorage.setItem("bookmarkedPatterns", JSON.stringify(bookmarks));
+            setIsBookmarked(!isBookmarked);
+        } catch (e) {
+            console.error("Failed to save bookmark", e);
+        }
     };
 
     return (
@@ -40,8 +72,14 @@ export default function Flashcard({ pattern, chapterTitle }: FlashcardProps) {
                 style={{ transformStyle: "preserve-3d" }}
             >
                 {/* Front Face */}
-                <div className="absolute w-full h-full backface-hidden bg-white dark:bg-zinc-800 rounded-xl border-2 border-indigo-100 dark:border-zinc-700 flex flex-col items-center justify-center p-6">
-                    <div className="absolute top-4 right-4">
+                <div className="absolute w-full h-full backface-hidden bg-white dark:bg-zinc-800 rounded-xl border-2 border-indigo-100 dark:border-zinc-700 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-white to-indigo-50/30">
+                    <div className="absolute top-4 right-4 flex gap-2">
+                        <button
+                            onClick={toggleBookmark}
+                            className={`p-2 rounded-full transition-colors ${isBookmarked ? "text-yellow-400 bg-yellow-50" : "text-stone-300 hover:text-yellow-400 hover:bg-yellow-50"}`}
+                        >
+                            <Star className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
+                        </button>
                         <button
                             onClick={handleSpeak}
                             className="p-2 rounded-full hover:bg-indigo-50 dark:hover:bg-zinc-700 text-indigo-500 transition-colors"
