@@ -2,7 +2,7 @@
 
 import { chapters } from "@/lib/data";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Trophy, RefreshCw, Home, BookOpen, Shuffle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Trophy, RefreshCw, Home, BookOpen, Shuffle, Library, MapPin } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,9 +12,10 @@ interface QuizQuestion {
     options: string[];
     answer: number;
     chapterTitle: string;
+    explanation?: string;
 }
 
-type QuizMode = "random" | "full";
+type QuizMode = "random" | "full" | "chapter_select";
 
 export default function GlobalQuizPage() {
     const [isStarted, setIsStarted] = useState(false);
@@ -26,7 +27,17 @@ export default function GlobalQuizPage() {
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
     const [isAnswered, setIsAnswered] = useState(false);
 
-    const startQuiz = (selectedMode: QuizMode) => {
+    // Initial Start (selecting main mode)
+    const selectMode = (selectedMode: QuizMode) => {
+        if (selectedMode === "chapter_select") {
+            setMode("chapter_select");
+            // Don't start yet, show chapter grid
+        } else {
+            startQuiz(selectedMode);
+        }
+    };
+
+    const startQuiz = (selectedMode: QuizMode, chapterId?: number) => {
         setMode(selectedMode);
 
         // Flatten all exercises
@@ -35,7 +46,8 @@ export default function GlobalQuizPage() {
                 question: ex.question,
                 options: ex.options,
                 answer: Number(ex.answer),
-                chapterTitle: chapter.title
+                chapterTitle: chapter.title,
+                explanation: ex.explanation // Add explanation
             }))
         );
 
@@ -45,10 +57,26 @@ export default function GlobalQuizPage() {
             // Shuffle and pick 10
             const shuffled = [...allExercises].sort(() => 0.5 - Math.random());
             selectedQuestions = shuffled.slice(0, 10);
-        } else {
-            // Full course: fix order or keep original chapter order
-            // Let's keep original order to simulate a full test
+        } else if (selectedMode === "full") {
+            // Full course
             selectedQuestions = allExercises;
+        } else if (selectedMode === "chapter_select" && chapterId) {
+            // Filter by chapter
+            const targetChapter = chapters.find(c => c.id === chapterId);
+            if (targetChapter) {
+                selectedQuestions = targetChapter.sections.exercises.map(ex => ({
+                    question: ex.question,
+                    options: ex.options,
+                    answer: Number(ex.answer),
+                    chapterTitle: targetChapter.title,
+                    explanation: ex.explanation
+                }));
+            }
+        }
+
+        if (selectedQuestions.length === 0) {
+            alert("선택한 챕터에 문제가 없습니다.");
+            return;
         }
 
         setQuestions(selectedQuestions);
@@ -84,9 +112,52 @@ export default function GlobalQuizPage() {
     const restart = () => {
         setIsStarted(false);
         setShowResult(false);
+        setMode("random"); // Reset to default state
     };
 
-    // 1. Start Screen
+    // 1. Chapter Selection Screen (Sub-screen of Start)
+    if (!isStarted && mode === "chapter_select") {
+        return (
+            <div className="min-h-screen bg-stone-50 flex flex-col items-center p-6">
+                <div className="max-w-4xl w-full">
+                    <button
+                        onClick={() => setMode("random")}
+                        className="mb-8 flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors"
+                    >
+                        <ArrowLeft size={20} /> 뒤로 가기
+                    </button>
+
+                    <h1 className="text-3xl font-bold font-serif text-indigo-900 mb-2">챕터 선택</h1>
+                    <p className="text-stone-600 mb-8">학습할 챕터를 선택해주세요.</p>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {chapters.map((chapter) => (
+                            <button
+                                key={chapter.id}
+                                onClick={() => startQuiz("chapter_select", chapter.id)}
+                                className="bg-white p-6 rounded-xl shadow-sm border border-stone-100 hover:border-indigo-500 hover:shadow-md transition-all text-left flex flex-col h-full group"
+                            >
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-xs font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                        Chapter {chapter.id}
+                                    </span>
+                                    <MapPin size={16} className="text-stone-300 group-hover:text-indigo-400" />
+                                </div>
+                                <h3 className="font-bold text-stone-800 text-lg leading-tight mb-1 group-hover:text-indigo-700">
+                                    {chapter.title}
+                                </h3>
+                                <p className="text-sm text-stone-400 mt-auto pt-2 truncate">
+                                    {chapter.location}
+                                </p>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // 2. Start Screen (Main)
     if (!isStarted) {
         return (
             <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-6 text-center">
@@ -97,18 +168,19 @@ export default function GlobalQuizPage() {
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="max-w-2xl w-full"
+                    className="max-w-4xl w-full"
                 >
                     <BookOpen className="w-20 h-20 text-indigo-900 mx-auto mb-6" />
                     <h1 className="text-4xl font-bold font-serif text-indigo-900 mb-4">일본 문학 여행 퀴즈</h1>
                     <p className="text-stone-600 mb-12 text-lg">
                         여행하며 배운 내용을 확인해보세요.<br />
-                        두 가지 모드 중 선택할 수 있습니다.
+                        원하는 방식으로 학습할 수 있습니다.
                     </p>
 
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid md:grid-cols-3 gap-6">
+                        {/* Mode 1: Random */}
                         <button
-                            onClick={() => startQuiz("random")}
+                            onClick={() => selectMode("random")}
                             className="bg-white p-8 rounded-2xl shadow-sm border-2 border-transparent hover:border-indigo-400 hover:shadow-md transition-all group"
                         >
                             <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
@@ -116,13 +188,27 @@ export default function GlobalQuizPage() {
                             </div>
                             <h3 className="text-xl font-bold text-stone-800 mb-2">랜덤 10문제</h3>
                             <p className="text-stone-500 text-sm">
-                                가볍게 실력을 테스트해보세요.<br />
-                                무작위로 10문제가 출제됩니다.
+                                전 범위에서 무작위로<br />10문제가 출제됩니다.
                             </p>
                         </button>
 
+                        {/* Mode 2: Chapter Select */}
                         <button
-                            onClick={() => startQuiz("full")}
+                            onClick={() => selectMode("chapter_select")}
+                            className="bg-white p-8 rounded-2xl shadow-sm border-2 border-transparent hover:border-emerald-400 hover:shadow-md transition-all group"
+                        >
+                            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                <Library size={24} />
+                            </div>
+                            <h3 className="text-xl font-bold text-stone-800 mb-2">챕터별 학습</h3>
+                            <p className="text-stone-500 text-sm">
+                                특정 챕터를 선택하여<br />집중적으로 복습합니다.
+                            </p>
+                        </button>
+
+                        {/* Mode 3: Full Course */}
+                        <button
+                            onClick={() => selectMode("full")}
                             className="bg-white p-8 rounded-2xl shadow-sm border-2 border-transparent hover:border-sakura-400 hover:shadow-md transition-all group"
                         >
                             <div className="w-12 h-12 bg-sakura-100 text-sakura-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
@@ -130,8 +216,7 @@ export default function GlobalQuizPage() {
                             </div>
                             <h3 className="text-xl font-bold text-stone-800 mb-2">전체 문제 풀기</h3>
                             <p className="text-stone-500 text-sm">
-                                1과부터 15과까지 모든 문제를<br />
-                                순서대로 풀어봅니다. (도전!)
+                                1과부터 15과까지<br />모든 문제를 도전합니다.
                             </p>
                         </button>
                     </div>
@@ -140,7 +225,7 @@ export default function GlobalQuizPage() {
         );
     }
 
-    // 2. Result Screen
+    // 3. Result Screen
     if (showResult) {
         return (
             <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-6">
@@ -152,7 +237,7 @@ export default function GlobalQuizPage() {
                     <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-6" />
                     <h1 className="text-3xl font-bold text-stone-800 mb-2">Quiz Complete!</h1>
                     <p className="text-stone-500 mb-8">
-                        {mode === "random" ? "랜덤 퀴즈 결과" : "전체 코스 완주!"}
+                        {mode === "random" ? "랜덤 퀴즈 결과" : mode === "chapter_select" ? "챕터 학습 완료" : "전체 코스 완주!"}
                     </p>
 
                     <div className="text-6xl font-bold text-indigo-600 mb-8">
@@ -184,7 +269,7 @@ export default function GlobalQuizPage() {
         );
     }
 
-    // 3. Quiz Interface
+    // 4. Quiz Interface
     const currentQuestion = questions[currentIndex];
 
     return (
@@ -197,7 +282,7 @@ export default function GlobalQuizPage() {
                     </button>
                     <div className="flex flex-col items-center">
                         <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">
-                            {mode === "random" ? "Random Quiz" : "Full Course"}
+                            {mode === "random" ? "Random Quiz" : mode === "chapter_select" ? "Chapter Quiz" : "Full Course"}
                         </span>
                         <span className="font-bold text-stone-800">Question {currentIndex + 1} / {questions.length}</span>
                     </div>
@@ -214,7 +299,7 @@ export default function GlobalQuizPage() {
             </div>
 
             {/* Question Card */}
-            <main className="flex-1 max-w-2xl mx-auto w-full p-6 flex flex-col justify-center pb-24">
+            <main className="flex-1 max-w-2xl mx-auto w-full p-6 flex flex-col justify-center pb-32">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentIndex}
@@ -275,10 +360,27 @@ export default function GlobalQuizPage() {
                                 );
                             })}
                         </div>
+
+                        {/* Explanation Section */}
+                        {isAnswered && currentQuestion.explanation && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                className="mt-6 pt-6 border-t border-stone-100"
+                            >
+                                <div className="flex items-start gap-3 bg-indigo-50 p-4 rounded-xl text-stone-700">
+                                    <Library className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-1" />
+                                    <div>
+                                        <p className="font-bold text-indigo-900 mb-1">해설</p>
+                                        <p className="leading-relaxed">{currentQuestion.explanation}</p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
                     </motion.div>
                 </AnimatePresence>
 
-                {/* Explanation / Next Button Area - Fixed at bottom for mobile convenience */}
+                {/* Next Button Area */}
                 <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur border-t border-stone-200 p-4 md:static md:bg-transparent md:border-0 md:p-0 md:mt-6 z-20">
                     <div className="max-w-2xl mx-auto flex items-center justify-end">
                         {isAnswered && (
