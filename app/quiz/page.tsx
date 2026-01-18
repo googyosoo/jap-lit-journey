@@ -232,12 +232,12 @@ export default function GlobalQuizPage() {
                     <h1 className="text-3xl font-bold font-serif text-indigo-900 mb-2">챕터 선택</h1>
                     <p className="text-stone-600 mb-8">학습할 챕터를 선택해주세요.</p>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {chapters.map((chapter) => (
                             <button
                                 key={chapter.id}
                                 onClick={() => startQuiz("chapter_select", chapter.id)}
-                                className="bg-white p-6 rounded-xl shadow-sm border border-stone-100 hover:border-indigo-500 hover:shadow-md transition-all text-left flex flex-col h-full group"
+                                className="bg-white p-5 rounded-xl shadow-sm border border-stone-100 hover:border-indigo-500 hover:shadow-md transition-all text-left flex flex-col h-full group"
                             >
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-xs font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-colors">
@@ -295,11 +295,11 @@ export default function GlobalQuizPage() {
                         </button>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                         {/* Mode 1: Random */}
                         <button
                             onClick={() => selectMode("random")}
-                            className="bg-white p-8 rounded-2xl shadow-sm border-2 border-transparent hover:border-indigo-400 hover:shadow-md transition-all group"
+                            className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border-2 border-transparent hover:border-indigo-400 hover:shadow-md transition-all group"
                         >
                             <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                                 <Shuffle size={24} />
@@ -313,7 +313,7 @@ export default function GlobalQuizPage() {
                         {/* Mode 2: Chapter Select */}
                         <button
                             onClick={() => selectMode("chapter_select")}
-                            className="bg-white p-8 rounded-2xl shadow-sm border-2 border-transparent hover:border-emerald-400 hover:shadow-md transition-all group"
+                            className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border-2 border-transparent hover:border-emerald-400 hover:shadow-md transition-all group"
                         >
                             <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                                 <Library size={24} />
@@ -327,7 +327,7 @@ export default function GlobalQuizPage() {
                         {/* Mode 3: Full Course */}
                         <button
                             onClick={() => selectMode("full")}
-                            className="bg-white p-8 rounded-2xl shadow-sm border-2 border-transparent hover:border-sakura-400 hover:shadow-md transition-all group"
+                            className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border-2 border-transparent hover:border-sakura-400 hover:shadow-md transition-all group"
                         >
                             <div className="w-12 h-12 bg-sakura-100 text-sakura-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                                 <Trophy size={24} />

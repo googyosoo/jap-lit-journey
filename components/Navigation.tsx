@@ -54,39 +54,81 @@ export default function Navigation() {
                 </div>
             </aside>
 
-            {/* Mobile Header & Menu */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-md z-50 border-b border-stone-200 flex items-center justify-between px-4">
+            {/* Mobile Top Bar (Title Only) */}
+            <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white/90 backdrop-blur-md z-30 border-b border-stone-200 flex items-center justify-center px-4">
                 <span className="font-serif font-bold text-lg text-indigo-900">일본어 문학기행</span>
-                <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-stone-600">
-                    {isOpen ? <X /> : <Menu />}
-                </button>
             </div>
 
-            {/* Mobile Drawer */}
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="md:hidden fixed inset-0 z-40 bg-white pt-20 px-6"
+            {/* Mobile Bottom Navigation */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 z-50 pb-safe">
+                <div className="flex justify-around items-center h-16">
+                    <Link
+                        href="/"
+                        className={cn(
+                            "flex flex-col items-center justify-center w-full h-full space-y-1",
+                            pathname === "/" ? "text-sakura-600" : "text-stone-400 hover:text-stone-600"
+                        )}
                     >
-                        <nav className="space-y-4">
-                            {navItems.map((item) => (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    onClick={() => setIsOpen(false)}
-                                    className="flex items-center gap-4 p-4 text-lg border-b border-stone-100"
-                                >
-                                    <item.icon className="text-sakura-500" />
-                                    {item.name}
-                                </Link>
-                            ))}
-                        </nav>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        <Home size={24} strokeWidth={pathname === "/" ? 2.5 : 2} />
+                        <span className="text-[10px] font-bold">홈</span>
+                    </Link>
+                    <Link
+                        href="/map"
+                        className={cn(
+                            "flex flex-col items-center justify-center w-full h-full space-y-1",
+                            pathname === "/map" ? "text-indigo-600" : "text-stone-400 hover:text-stone-600"
+                        )}
+                    >
+                        <Map size={24} strokeWidth={pathname === "/map" ? 2.5 : 2} />
+                        <span className="text-[10px] font-bold">지도</span>
+                    </Link>
+                    <Link
+                        href="/quiz"
+                        className={cn(
+                            "flex flex-col items-center justify-center w-full h-full space-y-1",
+                            pathname.startsWith("/quiz") ? "text-emerald-600" : "text-stone-400 hover:text-stone-600"
+                        )}
+                    >
+                        <BookOpen size={24} strokeWidth={pathname.startsWith("/quiz") ? 2.5 : 2} />
+                        <span className="text-[10px] font-bold">퀴즈</span>
+                    </Link>
+                    {/* Passport Link - Added for easy access */}
+                    <Link
+                        href="/passport"
+                        className={cn(
+                            "flex flex-col items-center justify-center w-full h-full space-y-1",
+                            pathname === "/passport" ? "text-orange-600" : "text-stone-400 hover:text-stone-600"
+                        )}
+                    >
+                        {/* Using a custom icon or generic one for Passport if not imported, reusing Map for now or importing new one if needed.
+                            Wait, I can add `Book` or `Stamp` icon. Let's use `Stamp` if available or `Award`?
+                            Checking imports: `Map, BookOpen, Home, Menu, X` are imported.
+                            I should check what icons are available or use one of existing.
+                            Actually `PassportPage` uses `Map` icon in header.
+                            Let's add `User` or `Award` or `Sticker` icon?
+                            I will stick to `BookOpen` variant or similar.
+                            Actually let's use `Trophy` for quiz and `User` or `CreditCard` (looks like passport)?
+                            Let's import `CreditCard` or `Stamp` from lucide-react.
+                            Wait, I need to update imports first.
+                        */}
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={pathname === "/passport" ? "2.5" : "2"}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <rect width="16" height="22" x="4" y="2" rx="2" />
+                            <circle cx="12" cy="14" r="5" />
+                        </svg>
+                        <span className="text-[10px] font-bold">여권</span>
+                    </Link>
+                </div>
+            </nav>
         </>
     );
 }

@@ -15,7 +15,7 @@ const MapComponent = dynamic(() => import("../../components/MapComponent"), {
 
 export default function MapPage() {
     return (
-        <div className="h-[calc(100vh-64px)] w-full relative">
+        <div className="h-[calc(100vh-120px)] md:h-[calc(100vh-64px)] w-full relative">
             <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur px-6 py-4 rounded-xl shadow-lg border border-stone-200 max-w-sm">
                 <h1 className="text-2xl font-bold font-serif text-indigo-900 mb-1">문학 지도</h1>
                 <p className="text-sm text-stone-500">

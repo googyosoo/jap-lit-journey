@@ -35,7 +35,7 @@ export default function PassportPage() {
 
     return (
         <div className="min-h-screen bg-stone-100 font-sans pb-20">
-            <header className="bg-indigo-900 text-white p-6 shadow-lg sticky top-0 z-10">
+            <header className="bg-indigo-900 text-white p-4 md:p-6 shadow-lg sticky top-0 z-10">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2 hover:text-sky-300 transition-colors">
                         <ArrowLeft size={20} />

@@ -324,7 +324,7 @@ export default function ChapterPage({ params }: { params: Promise<{ id: string }
                         )}
 
                         {activeTab === "map" && (
-                            <div className="h-[500px] w-full bg-stone-100 rounded-xl overflow-hidden relative flex flex-col">
+                            <div className="h-[300px] md:h-[500px] w-full bg-stone-100 rounded-xl overflow-hidden relative flex flex-col">
                                 <div className="flex-1 relative">
                                     <iframe
                                         width="100%"
