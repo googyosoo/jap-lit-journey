@@ -2,14 +2,14 @@
 
 import { chapters } from "@/lib/data";
 import Flashcard from "@/components/Flashcard";
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Star, ArrowLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
-import { ArrowLeft, BookOpen } from "lucide-react";
 
 export default function WordbookPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+    const [selectedChapter, setSelectedChapter] = useState<number | "all">("all");
     const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
 
     // Load bookmarks on mount and when interactions happen (polled or simple effect)
@@ -61,8 +61,9 @@ export default function WordbookPage() {
             );
 
         const matchesBookmark = showBookmarksOnly ? bookmarkedIds.includes(p.id) : true;
+        const matchesChapter = selectedChapter === "all" ? true : p.chapterId === selectedChapter;
 
-        return matchesSearch && matchesBookmark;
+        return matchesSearch && matchesBookmark && matchesChapter;
     });
 
     return (
@@ -96,14 +97,27 @@ export default function WordbookPage() {
                                 const stored = localStorage.getItem("bookmarkedPatterns");
                                 if (stored) setBookmarkedIds(JSON.parse(stored));
                             }}
-                            className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 border ${showBookmarksOnly
-                                    ? "bg-yellow-100 text-yellow-700 border-yellow-200 shadow-inner"
-                                    : "bg-white text-stone-500 border-stone-200 hover:bg-stone-50"
+                            className={`w-full md:w-auto px-6 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 border ${showBookmarksOnly
+                                ? "bg-yellow-100 text-yellow-700 border-yellow-200 shadow-inner"
+                                : "bg-white text-stone-500 border-stone-200 hover:bg-stone-50"
                                 }`}
                         >
                             <Star className={`w-5 h-5 ${showBookmarksOnly ? "fill-current" : ""}`} />
-                            {showBookmarksOnly ? "보관함 (My)" : "전체 보기 (All)"}
+                            {showBookmarksOnly ? "보관함 (My)" : "전체 보기"}
                         </button>
+
+                        <select
+                            value={selectedChapter}
+                            onChange={(e) => setSelectedChapter(e.target.value === "all" ? "all" : Number(e.target.value))}
+                            className="w-full md:w-auto px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-600 font-medium outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 transition-all custom-select"
+                        >
+                            <option value="all">전체 챕터 (All)</option>
+                            {chapters.map(chapter => (
+                                <option key={chapter.id} value={chapter.id}>
+                                    Ch {chapter.id}. {chapter.title}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 </div>
             </div>

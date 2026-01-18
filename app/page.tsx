@@ -6,12 +6,12 @@ export default function Home() {
   return (
     <div className="space-y-12 pb-20">
       {/* Hero Header */}
-      <section className="relative rounded-3xl overflow-hidden shadow-xl aspect-[21/9] bg-stone-900 group">
+      <section className="relative rounded-3xl overflow-hidden shadow-xl min-h-[60vh] md:min-h-0 md:aspect-[21/9] bg-stone-900 group">
         {/* Placeholder for Hero Image - in real app would use next/image */}
         <div className="absolute inset-0 bg-[url('/images/tokyo_cherry_blossom.png')] bg-cover bg-center opacity-60 transition-opacity duration-700 group-hover:opacity-70 group-hover:scale-105"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
 
-        <div className="absolute bottom-0 left-0 p-8 md:p-12 text-white max-w-2xl">
+        <div className="absolute bottom-0 left-0 p-6 md:p-12 text-white max-w-2xl w-full">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sakura-500/80 backdrop-blur-md text-xs font-bold mb-4">
             <span className="animate-pulse">●</span> START YOUR JOURNEY
           </div>
@@ -23,28 +23,28 @@ export default function Home() {
             나츠메 소세키의 도쿄부터 미시마 유키오의 교토까지.
             언어와 문학이 안내하는 15일간의 여정.
           </p>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
             <Link
               href="/chapter/1"
-              className="inline-flex items-center gap-2 bg-white text-stone-900 px-6 py-3 rounded-full font-bold hover:bg-sakura-100 transition-colors"
+              className="inline-flex justify-center items-center gap-2 bg-white text-stone-900 px-6 py-3 rounded-full font-bold hover:bg-sakura-100 transition-colors w-full sm:w-auto"
             >
               여행 시작하기 <ArrowRight size={18} />
             </Link>
             <Link
               href="/passport"
-              className="inline-flex items-center gap-2 bg-stone-900/60 backdrop-blur-sm border border-stone-500 text-white px-6 py-3 rounded-full font-bold hover:bg-stone-800/80 transition-colors"
+              className="inline-flex justify-center items-center gap-2 bg-stone-900/60 backdrop-blur-sm border border-stone-500 text-white px-6 py-3 rounded-full font-bold hover:bg-stone-800/80 transition-colors w-full sm:w-auto"
             >
               <MapIcon size={18} className="text-sakura-300" /> 내 여권
             </Link>
             <Link
               href="/wordbook"
-              className="inline-flex items-center gap-2 bg-indigo-900/80 backdrop-blur-sm border border-indigo-500 text-white px-6 py-3 rounded-full font-bold hover:bg-indigo-800/80 transition-colors"
+              className="inline-flex justify-center items-center gap-2 bg-indigo-900/80 backdrop-blur-sm border border-indigo-500 text-white px-6 py-3 rounded-full font-bold hover:bg-indigo-800/80 transition-colors w-full sm:w-auto"
             >
               <Book size={18} className="text-indigo-300" /> 단어장
             </Link>
             <Link
               href="/quiz"
-              className="inline-flex items-center gap-2 bg-emerald-900/80 backdrop-blur-sm border border-emerald-500 text-white px-6 py-3 rounded-full font-bold hover:bg-emerald-800/80 transition-colors"
+              className="inline-flex justify-center items-center gap-2 bg-emerald-900/80 backdrop-blur-sm border border-emerald-500 text-white px-6 py-3 rounded-full font-bold hover:bg-emerald-800/80 transition-colors w-full sm:w-auto"
             >
               <Trophy size={18} className="text-emerald-300" /> 퀴즈
             </Link>

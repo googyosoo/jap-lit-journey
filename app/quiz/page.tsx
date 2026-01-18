@@ -1,13 +1,14 @@
 "use client";
 
 import { chapters } from "@/lib/data";
-import { useState } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Trophy, RefreshCw, Home, BookOpen, Shuffle, Library, MapPin } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Trophy, RefreshCw, Home, BookOpen, Shuffle, Library, MapPin, Timer, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface QuizQuestion {
+    originalIndex: number; // To track for retry
     question: string;
     options: string[];
     answer: number;
@@ -15,7 +16,7 @@ interface QuizQuestion {
     explanation?: string;
 }
 
-type QuizMode = "random" | "full" | "chapter_select";
+type QuizMode = "random" | "full" | "chapter_select" | "retry";
 
 export default function GlobalQuizPage() {
     const [isStarted, setIsStarted] = useState(false);
@@ -27,56 +28,115 @@ export default function GlobalQuizPage() {
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
     const [isAnswered, setIsAnswered] = useState(false);
 
+    // New Features States
+    const [isTimeAttack, setIsTimeAttack] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(15);
+    const [wrongQuestions, setWrongQuestions] = useState<QuizQuestion[]>([]);
+
+    // Helper to shuffle options
+    const shuffleQuestion = (q: any): QuizQuestion => {
+        const originalOptions = q.options;
+        const correctOption = originalOptions[q.answer];
+
+        // Create an array of indices [0, 1, 2, 3] and shuffle it
+        const shuffledIndices = [0, 1, 2, 3].sort(() => 0.5 - Math.random());
+
+        // Reorder options based on shuffled indices
+        const newOptions = shuffledIndices.map(index => originalOptions[index]);
+
+        // Find new index of the correct answer
+        const newAnswer = newOptions.indexOf(correctOption);
+
+        return {
+            originalIndex: 0, // Not strictly used for mapping back but good for types
+            question: q.question,
+            options: newOptions,
+            answer: newAnswer,
+            chapterTitle: q.chapterTitle,
+            explanation: q.explanation
+        };
+    };
+
     // Initial Start (selecting main mode)
     const selectMode = (selectedMode: QuizMode) => {
         if (selectedMode === "chapter_select") {
             setMode("chapter_select");
-            // Don't start yet, show chapter grid
         } else {
             startQuiz(selectedMode);
         }
     };
 
-    const startQuiz = (selectedMode: QuizMode, chapterId?: number) => {
+    const startQuiz = (selectedMode: QuizMode, chapterId?: number, retryList?: QuizQuestion[]) => {
         setMode(selectedMode);
-
-        // Flatten all exercises
-        const allExercises = chapters.flatMap(chapter =>
-            chapter.sections.exercises.map(ex => ({
-                question: ex.question,
-                options: ex.options,
-                answer: Number(ex.answer),
-                chapterTitle: chapter.title,
-                explanation: ex.explanation // Add explanation
-            }))
-        );
 
         let selectedQuestions: QuizQuestion[] = [];
 
-        if (selectedMode === "random") {
-            // Shuffle and pick 10
-            const shuffled = [...allExercises].sort(() => 0.5 - Math.random());
-            selectedQuestions = shuffled.slice(0, 10);
-        } else if (selectedMode === "full") {
-            // Full course
-            selectedQuestions = allExercises;
-        } else if (selectedMode === "chapter_select" && chapterId) {
-            // Filter by chapter
-            const targetChapter = chapters.find(c => c.id === chapterId);
-            if (targetChapter) {
-                selectedQuestions = targetChapter.sections.exercises.map(ex => ({
+        if (selectedMode === "retry" && retryList) {
+            // For retry, we don't re-shuffle options to keep it familiar, or we could. 
+            // Let's re-shuffle to ensure they learned it.
+            selectedQuestions = retryList.map(q => shuffleQuestion({
+                ...q,
+                // We need to pass original raw data if we want to re-shuffle efficiently, 
+                // but here shuffleQuestion expects specific structure. 
+                // Since q is already a QuizQuestion, we can just use it.
+                // However, q.answer is already the shuffled index from previous run.
+                // To be safe, we might just keep them as is for Retry to avoid confusion, 
+                // OR we accept that we can't easily un-shuffle without original data.
+                // Let's just use them AS IS for retry to reinforce memory of that specific instance,
+                // OR better: we can't easily re-shuffle because we lost the original 'reference' of which text was answer.
+                // Actually we have the text of options and index.
+                // Let's just keep retry questions AS IS.
+            }));
+            // Actually, wait, if we shuffle again, we need to know which text was the correct answer.
+            // q.options[q.answer] is the correct text. 
+            // So we can re-shuffle.
+            selectedQuestions = retryList.map(q => {
+                const correctText = q.options[q.answer];
+                const shuffledIndices = [0, 1, 2, 3].sort(() => 0.5 - Math.random());
+                const newOptions = shuffledIndices.map(idx => q.options[idx]);
+                const newAnswer = newOptions.indexOf(correctText);
+                return { ...q, options: newOptions, answer: newAnswer };
+            });
+
+        } else {
+            // Flatten all exercises
+            const allExercises = chapters.flatMap(chapter =>
+                chapter.sections.exercises.map(ex => ({
                     question: ex.question,
                     options: ex.options,
                     answer: Number(ex.answer),
-                    chapterTitle: targetChapter.title,
+                    chapterTitle: chapter.title,
                     explanation: ex.explanation
-                }));
-            }
-        }
+                }))
+            );
 
-        if (selectedQuestions.length === 0) {
-            alert("선택한 챕터에 문제가 없습니다.");
-            return;
+            let rawQuestions: any[] = [];
+
+            if (selectedMode === "random") {
+                const shuffled = [...allExercises].sort(() => 0.5 - Math.random());
+                rawQuestions = shuffled.slice(0, 10);
+            } else if (selectedMode === "full") {
+                rawQuestions = allExercises;
+            } else if (selectedMode === "chapter_select" && chapterId) {
+                const targetChapter = chapters.find(c => c.id === chapterId);
+                if (targetChapter) {
+                    rawQuestions = targetChapter.sections.exercises.map(ex => ({
+                        question: ex.question,
+                        options: ex.options,
+                        answer: Number(ex.answer),
+                        chapterTitle: targetChapter.title,
+                        explanation: ex.explanation
+                    }));
+                }
+            }
+
+            if (rawQuestions.length === 0) {
+                alert("선택한 챕터에 문제가 없습니다.");
+                return;
+            }
+
+            // Shuffle Options for each question
+            selectedQuestions = rawQuestions.map(q => shuffleQuestion(q));
         }
 
         setQuestions(selectedQuestions);
@@ -86,6 +146,43 @@ export default function GlobalQuizPage() {
         setSelectedOption(null);
         setIsAnswered(false);
         setIsStarted(true);
+        if (selectedMode !== "retry") {
+            // Only reset wrong questions if starting a fresh new game, NOT if we are retrying (though logic typically implies retry resets these for the NEW session)
+            // Actually, for a retry session, we should clear the 'old' wrong questions and collect 'new' wrong ones from this retry session.
+            setWrongQuestions([]);
+        } else {
+            setWrongQuestions([]);
+        }
+
+        // Timer Reset
+        if (isTimeAttack) {
+            setTimeLeft(15);
+        }
+    };
+
+    // Timer Logic
+    useEffect(() => {
+        if (!isStarted || !isTimeAttack || isAnswered || showResult) return;
+
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    handleTimeOut();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isStarted, isTimeAttack, isAnswered, showResult, currentIndex]);
+
+    const handleTimeOut = () => {
+        setIsAnswered(true);
+        setSelectedOption(-1); // -1 indicates timeout
+        // Add to wrong questions
+        setWrongQuestions(prev => [...prev, questions[currentIndex]]);
     };
 
     const handleOptionClick = (optionIndex: number) => {
@@ -94,8 +191,11 @@ export default function GlobalQuizPage() {
         setSelectedOption(optionIndex);
         setIsAnswered(true);
 
-        if (optionIndex === questions[currentIndex].answer) {
+        const currentQ = questions[currentIndex];
+        if (optionIndex === currentQ.answer) {
             setScore(prev => prev + 1);
+        } else {
+            setWrongQuestions(prev => [...prev, currentQ]);
         }
     };
 
@@ -104,6 +204,7 @@ export default function GlobalQuizPage() {
             setCurrentIndex(prev => prev + 1);
             setSelectedOption(null);
             setIsAnswered(false);
+            if (isTimeAttack) setTimeLeft(15);
         } else {
             setShowResult(true);
         }
@@ -112,10 +213,11 @@ export default function GlobalQuizPage() {
     const restart = () => {
         setIsStarted(false);
         setShowResult(false);
-        setMode("random"); // Reset to default state
+        setMode("random");
+        setWrongQuestions([]);
     };
 
-    // 1. Chapter Selection Screen (Sub-screen of Start)
+    // 1. Chapter Selection
     if (!isStarted && mode === "chapter_select") {
         return (
             <div className="min-h-screen bg-stone-50 flex flex-col items-center p-6">
@@ -157,7 +259,7 @@ export default function GlobalQuizPage() {
         );
     }
 
-    // 2. Start Screen (Main)
+    // 2. Start Screen
     if (!isStarted) {
         return (
             <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-6 text-center">
@@ -172,10 +274,26 @@ export default function GlobalQuizPage() {
                 >
                     <BookOpen className="w-20 h-20 text-indigo-900 mx-auto mb-6" />
                     <h1 className="text-4xl font-bold font-serif text-indigo-900 mb-4">일본 문학 여행 퀴즈</h1>
-                    <p className="text-stone-600 mb-12 text-lg">
+                    <p className="text-stone-600 mb-8 text-lg">
                         여행하며 배운 내용을 확인해보세요.<br />
                         원하는 방식으로 학습할 수 있습니다.
                     </p>
+
+                    {/* Time Attack Toggle */}
+                    <div className="flex justify-center mb-12">
+                        <button
+                            onClick={() => setIsTimeAttack(!isTimeAttack)}
+                            className={cn(
+                                "flex items-center gap-3 px-6 py-3 rounded-full font-bold transition-all",
+                                isTimeAttack
+                                    ? "bg-red-100 text-red-600 border-2 border-red-200"
+                                    : "bg-white text-stone-400 border-2 border-stone-100 hover:border-stone-200"
+                            )}
+                        >
+                            <Timer size={20} />
+                            {isTimeAttack ? "타임 어택 모드 ON (15초)" : "타임 어택 모드 OFF"}
+                        </button>
+                    </div>
 
                     <div className="grid md:grid-cols-3 gap-6">
                         {/* Mode 1: Random */}
@@ -237,7 +355,7 @@ export default function GlobalQuizPage() {
                     <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-6" />
                     <h1 className="text-3xl font-bold text-stone-800 mb-2">Quiz Complete!</h1>
                     <p className="text-stone-500 mb-8">
-                        {mode === "random" ? "랜덤 퀴즈 결과" : mode === "chapter_select" ? "챕터 학습 완료" : "전체 코스 완주!"}
+                        {mode === "random" ? "랜덤 퀴즈 결과" : mode === "chapter_select" ? "챕터 학습 완료" : mode === "retry" ? "오답 노트 완료" : "전체 코스 완주!"}
                     </p>
 
                     <div className="text-6xl font-bold text-indigo-600 mb-8">
@@ -250,19 +368,31 @@ export default function GlobalQuizPage() {
                                 "조금 더 분발해 볼까요? 💪"}
                     </p>
 
-                    <div className="flex gap-4 justify-center">
-                        <button
-                            onClick={restart}
-                            className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-bold"
-                        >
-                            <RefreshCw size={20} /> 처음으로
-                        </button>
-                        <Link
-                            href="/"
-                            className="flex items-center gap-2 px-6 py-3 bg-stone-200 text-stone-700 rounded-xl hover:bg-stone-300 transition-colors font-bold"
-                        >
-                            <Home size={20} /> 홈으로
-                        </Link>
+                    <div className="flex flex-col gap-3">
+                        {/* Retry Wrong Answers Button */}
+                        {wrongQuestions.length > 0 && (
+                            <button
+                                onClick={() => startQuiz("retry", undefined, wrongQuestions)}
+                                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors font-bold border border-red-100"
+                            >
+                                <RotateCcw size={20} /> 틀린 문제 다시 풀기 ({wrongQuestions.length}문제)
+                            </button>
+                        )}
+
+                        <div className="flex gap-4 justify-center w-full">
+                            <button
+                                onClick={restart}
+                                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-bold"
+                            >
+                                <RefreshCw size={20} /> 처음으로
+                            </button>
+                            <Link
+                                href="/"
+                                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-stone-200 text-stone-700 rounded-xl hover:bg-stone-300 transition-colors font-bold"
+                            >
+                                <Home size={20} /> 홈으로
+                            </Link>
+                        </div>
                     </div>
                 </motion.div>
             </div>
@@ -282,20 +412,36 @@ export default function GlobalQuizPage() {
                     </button>
                     <div className="flex flex-col items-center">
                         <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">
-                            {mode === "random" ? "Random Quiz" : mode === "chapter_select" ? "Chapter Quiz" : "Full Course"}
+                            {mode === "random" ? "Random Quiz" : mode === "retry" ? "Wrong Answers" : mode === "chapter_select" ? "Chapter Quiz" : "Full Course"}
                         </span>
                         <span className="font-bold text-stone-800">Question {currentIndex + 1} / {questions.length}</span>
                     </div>
-                    <div className="w-10"></div> {/* Spacer */}
+                    {/* Time Attack Timer */}
+                    <div className="w-10 flex justify-end">
+                        {isTimeAttack && !isAnswered && (
+                            <div className={cn("font-mono font-bold text-lg", timeLeft <= 5 ? "text-red-500 animate-pulse" : "text-indigo-600")}>
+                                {timeLeft}s
+                            </div>
+                        )}
+                    </div>
                 </div>
             </header>
 
-            {/* Progress Bar */}
-            <div className="h-2 bg-stone-200 w-full">
+            {/* Progress Bar & Timer Bar */}
+            <div className="h-2 bg-stone-200 w-full relative">
                 <div
                     className="h-full bg-indigo-500 transition-all duration-300 ease-out"
                     style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
                 />
+                {isTimeAttack && !isAnswered && (
+                    <motion.div
+                        initial={{ width: "100%" }}
+                        animate={{ width: "0%" }}
+                        transition={{ duration: 15, ease: "linear" }}
+                        key={currentIndex} // Reset animation on new question
+                        className="absolute top-0 left-0 h-full bg-red-400 opacity-50"
+                    />
+                )}
             </div>
 
             {/* Question Card */}
@@ -323,8 +469,10 @@ export default function GlobalQuizPage() {
                                 if (isAnswered) {
                                     if (idx === currentQuestion.answer) {
                                         styleClass = "bg-green-100 border-green-500 text-green-800 ring-1 ring-green-500 font-bold";
-                                    } else if (idx === selectedOption) {
+                                    } else if (idx === selectedOption) { // Selected wrong option
                                         styleClass = "bg-red-50 border-red-300 text-red-800";
+                                    } else if (selectedOption === -1) { // Time out
+                                        styleClass = "opacity-50 border-stone-100";
                                     } else {
                                         styleClass = "opacity-50 border-stone-100";
                                     }
@@ -362,7 +510,7 @@ export default function GlobalQuizPage() {
                         </div>
 
                         {/* Explanation Section */}
-                        {isAnswered && currentQuestion.explanation && (
+                        {isAnswered && (
                             <motion.div
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: "auto" }}
@@ -371,8 +519,12 @@ export default function GlobalQuizPage() {
                                 <div className="flex items-start gap-3 bg-indigo-50 p-4 rounded-xl text-stone-700">
                                     <Library className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-1" />
                                     <div>
-                                        <p className="font-bold text-indigo-900 mb-1">해설</p>
-                                        <p className="leading-relaxed">{currentQuestion.explanation}</p>
+                                        <p className="font-bold text-indigo-900 mb-1">
+                                            {selectedOption === -1 ? "⏰ 시간 초과!" : "해설"}
+                                        </p>
+                                        <p className="leading-relaxed">
+                                            {currentQuestion.explanation || "정답입니다."}
+                                        </p>
                                     </div>
                                 </div>
                             </motion.div>
