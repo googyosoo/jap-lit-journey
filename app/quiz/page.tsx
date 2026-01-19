@@ -262,7 +262,7 @@ export default function GlobalQuizPage() {
     // 2. Start Screen
     if (!isStarted) {
         return (
-            <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-6 text-center">
+            <div className="min-h-screen bg-stone-50 flex flex-col items-center pt-24 pb-10 px-6 text-center">
                 <Link href="/" className="absolute top-6 left-6 p-2 hover:bg-stone-100 rounded-full text-stone-500 transition-colors">
                     <ArrowLeft size={24} />
                 </Link>

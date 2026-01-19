@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div className="space-y-12 pb-20">
       {/* Hero Header */}
-      <section className="relative rounded-3xl overflow-hidden shadow-xl h-auto min-h-[500px] md:h-auto md:min-h-0 md:aspect-[21/9] bg-stone-900 group flex flex-col justify-end">
+      <section className="relative rounded-3xl overflow-hidden shadow-xl h-auto min-h-[calc(100vh-100px)] md:h-auto md:min-h-0 md:aspect-[21/9] bg-stone-900 group flex flex-col justify-end">
         {/* Placeholder for Hero Image - in real app would use next/image */}
         <div className="absolute inset-0 bg-[url('/images/tokyo_cherry_blossom.png')] bg-cover bg-center opacity-60 transition-opacity duration-700 group-hover:opacity-70 group-hover:scale-105"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
