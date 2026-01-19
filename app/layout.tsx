@@ -30,9 +30,9 @@ export default function RootLayout({
           notoSerif.variable
         )}
       >
-        <div className="flex h-screen flex-col md:flex-row overflow-hidden">
+        <div className="flex h-[100dvh] flex-col md:flex-row overflow-hidden">
           <Navigation />
-          <main className="flex-1 overflow-y-auto no-scrollbar md:p-8 p-4 pb-24 md:pb-8 relative">
+          <main className="flex-1 overflow-y-auto no-scrollbar md:p-8 p-4 pb-32 md:pb-8 relative">
             {/* Background Pattern */}
             <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/shattered-island.png')] mix-blend-multiply"></div>
             <div className="relative z-10 max-w-5xl mx-auto h-full">

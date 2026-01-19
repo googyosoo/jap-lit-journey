@@ -55,8 +55,10 @@ export default function Navigation() {
             </aside>
 
             {/* Mobile Top Bar (Title Only) */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white/90 backdrop-blur-md z-30 border-b border-stone-200 flex items-center justify-center px-4">
-                <span className="font-serif font-bold text-lg text-indigo-900">일본어 문학기행</span>
+            <div className="md:hidden fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-30 border-b border-stone-200 pt-safe">
+                <div className="flex items-center justify-center h-14 px-4">
+                    <span className="font-serif font-bold text-lg text-indigo-900">일본어 문학기행</span>
+                </div>
             </div>
 
             {/* Mobile Bottom Navigation */}
@@ -80,7 +82,7 @@ export default function Navigation() {
                         )}
                     >
                         <Map size={24} strokeWidth={pathname === "/map" ? 2.5 : 2} />
-                        <span className="text-[10px] font-bold">지도</span>
+                        <span className="text-[10px] font-bold">문학지도</span>
                     </Link>
                     <Link
                         href="/quiz"

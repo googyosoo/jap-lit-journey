@@ -6,20 +6,20 @@ export default function Home() {
   return (
     <div className="space-y-12 pb-20">
       {/* Hero Header */}
-      <section className="relative rounded-3xl overflow-hidden shadow-xl h-auto min-h-[calc(100vh-100px)] md:h-auto md:min-h-0 md:aspect-[21/9] bg-stone-900 group flex flex-col justify-end">
+      <section className="relative rounded-3xl overflow-hidden shadow-xl h-auto min-h-[calc(100dvh-100px)] md:h-auto md:min-h-0 md:aspect-[21/9] bg-stone-900 group flex flex-col justify-end">
         {/* Placeholder for Hero Image - in real app would use next/image */}
         <div className="absolute inset-0 bg-[url('/images/tokyo_cherry_blossom.png')] bg-cover bg-center opacity-60 transition-opacity duration-700 group-hover:opacity-70 group-hover:scale-105"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
 
-        <div className="relative z-10 p-6 pt-20 md:p-12 text-white max-w-2xl w-full">
+        <div className="relative z-10 p-4 pt-24 md:p-12 text-white max-w-2xl w-full">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sakura-500/80 backdrop-blur-md text-xs font-bold mb-4">
             <span className="animate-pulse">●</span> START YOUR JOURNEY
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold font-serif mb-4 leading-tight">
+          <h1 className="text-3xl md:text-6xl font-bold font-serif mb-4 leading-tight">
             책으로 떠나는 <br />
             <span className="text-sakura-300">일본 문학 여행</span>
           </h1>
-          <p className="text-stone-300 text-lg md:text-xl font-light mb-8 max-w-lg">
+          <p className="text-stone-300 text-base md:text-xl font-light mb-8 max-w-lg">
             나츠메 소세키의 도쿄부터 미시마 유키오의 교토까지.
             언어와 문학이 안내하는 15일간의 여정.
           </p>
