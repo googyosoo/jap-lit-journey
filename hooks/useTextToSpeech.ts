@@ -25,7 +25,7 @@ export function useTextToSpeech() {
         }
     }, []);
 
-    const speak = useCallback((text: string, lang: string = "ja-JP", gender: "male" | "female" = "female") => {
+    const speak = useCallback((text: string, lang: string = "ja-JP", gender: "male" | "female" = "female", speaker?: string) => {
         if (!isSupported || !text) return;
 
         // Ensure voices are loaded (fallback for some browsers)
@@ -40,14 +40,28 @@ export function useTextToSpeech() {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
 
-        // Gender-based adjustments (Pitch/Rate)
-        if (gender === "male") {
-            utterance.pitch = 0.9;
-            utterance.rate = 1.0;
+        // Base settings
+        let pitch = 1.0;
+        let rate = 1.0;
+
+        // Character-specific Voice Profiles
+        if (speaker === "민호") {
+            pitch = 0.9;
+            rate = 1.0;
+        } else if (speaker === "미유키") {
+            pitch = 1.1; // Slightly higher
+            rate = 1.05; // Slightly faster (energetic)
+        } else if (speaker === "이케야마") {
+            pitch = 0.75; // Deeper voice
+            rate = 0.9; // Slower, more deliberate
+        } else if (gender === "male") {
+            pitch = 0.9;
         } else {
-            utterance.pitch = 1.0;
-            utterance.rate = 1.0;
+            pitch = 1.0;
         }
+
+        utterance.pitch = pitch;
+        utterance.rate = rate;
 
         // Voice Selection Logic
         let voice: SpeechSynthesisVoice | undefined;
@@ -59,21 +73,36 @@ export function useTextToSpeech() {
             return vLang === normalizedLang || vLang.startsWith(normalizedLang.split("-")[0]);
         };
 
-        // 1. Try to find a voice that matches the language and gender keywords
-        if (gender === "male") {
-            voice = currentVoices.find(v => isLangMatch(v) && (v.name.includes("Ichiro") || v.name.includes("Male") || v.name.includes("Hattori")));
-        } else {
-            voice = currentVoices.find(v => isLangMatch(v) && (v.name.includes("Ayumi") || v.name.includes("Haruka") || v.name.includes("Female") || v.name.includes("Kyoko")));
+        const availableVoices = currentVoices.filter(isLangMatch);
+
+        // 1. Try to assign specific voices to specific characters if multiple voices exist
+        if (availableVoices.length > 0) {
+            // Check for known quality voices
+            const maleVoices = availableVoices.filter(v => v.name.includes("Ichiro") || v.name.includes("Male") || v.name.includes("Hattori"));
+            const femaleVoices = availableVoices.filter(v => v.name.includes("Ayumi") || v.name.includes("Haruka") || v.name.includes("Female") || v.name.includes("Kyoko") || v.name.includes("Google"));
+
+            if (gender === "male") {
+                if (maleVoices.length > 0) {
+                    // If multiple male voices, try to give different ones
+                    if (speaker === "이케야마" && maleVoices.length > 1) {
+                        voice = maleVoices[1]; // Second male voice for Ikeyama
+                    } else {
+                        voice = maleVoices[0];
+                    }
+                } else {
+                    // Fallback to any voice if no specific male voice
+                    voice = availableVoices.find(v => !v.name.includes("Female") && !v.name.includes("Ayumi") && !v.name.includes("Haruka"));
+                }
+            } else {
+                if (femaleVoices.length > 0) {
+                    voice = femaleVoices[0];
+                }
+            }
         }
 
-        // 2. If no gender-specific voice found, try Google's Japanese voice
-        if (!voice && normalizedLang.startsWith("ja")) {
-            voice = currentVoices.find(v => v.name.includes("Google 日本語"));
-        }
-
-        // 3. Fallback: just use any voice for that language
+        // 2. Generic Fallback
         if (!voice) {
-            voice = currentVoices.find(v => isLangMatch(v));
+            voice = availableVoices[0];
         }
 
         if (voice) {

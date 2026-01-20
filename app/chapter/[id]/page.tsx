@@ -152,9 +152,9 @@ export default function ChapterPage({ params }: { params: Promise<{ id: string }
         }
 
         const conv = chapter.sections.conversation[currentShadowIndex];
-        const gender = (conv.speaker === "민호" || conv.speaker === "이케야마") ? "male" : "female";
+        const gender = (conv.speaker === "민호" || conv.speaker === "이케야마" || conv.speaker === "점원(남)") ? "male" : "female";
 
-        speak(conv.japanese, "ja-JP", gender);
+        speak(conv.japanese, "ja-JP", gender, conv.speaker);
 
         // Approximate duration: char_length * 200ms + 3000ms pause for shadowing
         const duration = (conv.japanese.length * 200) + 3000;
@@ -270,7 +270,7 @@ export default function ChapterPage({ params }: { params: Promise<{ id: string }
                                                     <div className="flex justify-between items-start gap-2">
                                                         <p className="text-lg font-bold text-stone-800 font-serif leading-relaxed">{conv.japanese}</p>
                                                         <button
-                                                            onClick={() => speak(conv.japanese, "ja-JP", (conv.speaker === "민호" || conv.speaker === "이케야마") ? "male" : "female")}
+                                                            onClick={() => speak(conv.japanese, "ja-JP", (conv.speaker === "민호" || conv.speaker === "이케야마" || conv.speaker === "점원(남)") ? "male" : "female", conv.speaker)}
                                                             className="text-stone-300 hover:text-indigo-600 transition-colors p-1"
                                                             title="일본어 듣기"
                                                         >
