@@ -23,6 +23,45 @@ export default function ChapterPage({ params }: { params: Promise<{ id: string }
     const { speak, stop } = useTextToSpeech();
     const [isShadowing, setIsShadowing] = useState(false);
     const [currentShadowIndex, setCurrentShadowIndex] = useState(-1);
+    const [viewedTabs, setViewedTabs] = useState<Set<string>>(new Set(["conversation"]));
+
+    const handleTabChange = (tabId: "conversation" | "patterns" | "exercises" | "culture" | "map") => {
+        setActiveTab(tabId);
+        // Mark tab as viewed
+        if (!viewedTabs.has(tabId)) {
+            const newViewed = new Set(viewedTabs);
+            newViewed.add(tabId);
+            setViewedTabs(newViewed);
+        }
+    };
+
+    const handleAnswer = (questionIdx: number, optionIdx: number) => {
+        setAnswers(prev => {
+            const newAnswers = { ...prev, [questionIdx]: optionIdx };
+            return newAnswers;
+        });
+    };
+
+    // Check for chapter completion (Passport Stamp)
+    React.useEffect(() => {
+        const isAllTabsViewed = viewedTabs.size === 5; // conversation, patterns, exercises, culture, map
+        const isAllExercisesAnswered = chapter.sections.exercises.length === 0 ||
+            (Object.keys(answers).length === chapter.sections.exercises.length);
+
+        if (isAllTabsViewed && isAllExercisesAnswered) {
+            try {
+                const stored = localStorage.getItem("completedChapters");
+                const completed = stored ? JSON.parse(stored) : {};
+                if (!completed[id]) {
+                    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    completed[id] = today;
+                    localStorage.setItem("completedChapters", JSON.stringify(completed));
+                }
+            } catch (e) {
+                console.error("Failed to save completion status", e);
+            }
+        }
+    }, [viewedTabs, answers, id, chapter.sections.exercises.length]);
 
     // Shadowing Logic
     React.useEffect(() => {
