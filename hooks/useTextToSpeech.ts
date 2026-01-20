@@ -81,11 +81,21 @@ export function useTextToSpeech() {
             const maleVoices = availableVoices.filter(v => v.name.includes("Ichiro") || v.name.includes("Male") || v.name.includes("Hattori"));
             const femaleVoices = availableVoices.filter(v => v.name.includes("Ayumi") || v.name.includes("Haruka") || v.name.includes("Female") || v.name.includes("Kyoko") || v.name.includes("Google"));
 
+            // Simple hash function to get consistent index from string
+            const getHashIndex = (str: string, max: number) => {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                return Math.abs(hash) % max;
+            };
+
             if (gender === "male") {
                 if (maleVoices.length > 0) {
-                    // If multiple male voices, try to give different ones
-                    if (speaker === "이케야마" && maleVoices.length > 1) {
-                        voice = maleVoices[1]; // Second male voice for Ikeyama
+                    // Automatically assign a consistent male voice based on speaker name
+                    if (speaker) {
+                        const index = getHashIndex(speaker, maleVoices.length);
+                        voice = maleVoices[index];
                     } else {
                         voice = maleVoices[0];
                     }
@@ -95,7 +105,13 @@ export function useTextToSpeech() {
                 }
             } else {
                 if (femaleVoices.length > 0) {
-                    voice = femaleVoices[0];
+                    // Automatically assign a consistent female voice based on speaker name
+                    if (speaker) {
+                        const index = getHashIndex(speaker, femaleVoices.length);
+                        voice = femaleVoices[index];
+                    } else {
+                        voice = femaleVoices[0];
+                    }
                 }
             }
         }
