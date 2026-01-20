@@ -7,21 +7,21 @@ import { Map, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function PassportPage() {
-    const [visitedChapters, setVisitedChapters] = useState<Record<number, string>>({});
+    const [completedChapters, setCompletedChapters] = useState<Record<number, string>>({});
 
     useEffect(() => {
-        // Load visited chapters from local storage
+        // Load completed chapters from local storage
         try {
-            const stored = localStorage.getItem("visitedChapters");
+            const stored = localStorage.getItem("completedChapters");
             if (stored) {
-                setVisitedChapters(JSON.parse(stored));
+                setCompletedChapters(JSON.parse(stored));
             }
         } catch (e) {
-            console.error("Failed to load visited chapters", e);
+            console.error("Failed to load completed chapters", e);
         }
     }, []);
 
-    const visitedCount = Object.keys(visitedChapters).length;
+    const visitedCount = Object.keys(completedChapters).length;
     const progress = Math.round((visitedCount / chapters.length) * 100);
 
     const getLevelInfo = (count: number) => {
@@ -97,8 +97,8 @@ export default function PassportPage() {
                             <PassportStamp
                                 chapterId={chapter.id}
                                 location={chapter.location}
-                                isStamped={!!visitedChapters[chapter.id]}
-                                date={visitedChapters[chapter.id]}
+                                isStamped={!!completedChapters[chapter.id]}
+                                date={completedChapters[chapter.id]}
                             />
                         </div>
                     ))}

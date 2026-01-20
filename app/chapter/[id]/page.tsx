@@ -168,7 +168,7 @@ export default function ChapterPage({ params }: { params: Promise<{ id: string }
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => handleTabChange(tab.id)}
                         className={cn(
                             "flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all",
                             activeTab === tab.id
@@ -311,7 +311,11 @@ export default function ChapterPage({ params }: { params: Promise<{ id: string }
                         )}
 
                         {activeTab === "exercises" && (
-                            <ExerciseSection exercises={chapter.sections.exercises} />
+                            <ExerciseSection
+                                exercises={chapter.sections.exercises}
+                                answers={answers}
+                                onAnswer={handleAnswer}
+                            />
                         )}
 
                         {activeTab === "culture" && (
