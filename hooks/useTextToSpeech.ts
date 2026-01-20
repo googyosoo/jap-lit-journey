@@ -35,36 +35,35 @@ export function useTextToSpeech() {
         utterance.lang = lang;
 
         // Gender-based adjustments
-        // Note: Browser voice support varies wildly. Pitch/Rate is the most reliable cross-browser method.
+        // Gender-based adjustments
         if (gender === "male") {
-            utterance.pitch = 0.85; // Slightly deeper
-            utterance.rate = 0.95;  // Slightly slower/calmer
+            utterance.pitch = 0.9;
+            utterance.rate = 1.0;
         } else {
-            utterance.pitch = 1.1;  // Slightly higher
+            utterance.pitch = 1.0;
             utterance.rate = 1.0;
         }
 
-        // Try to select a specific voice if available
-        // Google voices are common on Chrome
-        const targetVoiceName = gender === "male" ? "Google 日本語" : "Google 日本語"; // Google often has one main voice, sometimes separate
-        // Some systems have "Google Deutsch", "Google US English" etc.
-        // For Japanese, usually "Google 日本語" is female-sounding by default or one generic voice.
-        // We rely on pitch for differentiation mostly unless specific voices are known.
+        // Voice Selection Logic
+        let voice: SpeechSynthesisVoice | undefined;
 
-        // Advanced: Microsoft voices often indicate Gender (e.g. "Microsoft Ichiro" vs "Microsoft Ayumi")
-        let voice = voices.find(v => v.lang === lang && v.name.includes(gender === "male" ? "Male" : "Female"));
-
-        // Fallback checks for common JP voices
-        if (!voice) {
-            if (gender === "male") {
-                // Try to find a male-sounding voice if possible, or just default
-                voice = voices.find(v => v.lang === lang && (v.name.includes("Ichiro") || v.name.includes("Haruka"))); // Haruka is usually female, Ichiro male
-            }
+        // 1. Try to find a voice that matches the language and gender specifically
+        if (gender === "male") {
+            // Prioritize known male Japanese voices
+            voice = voices.find(v => v.lang === lang && (v.name.includes("Ichiro") || v.name.includes("Male")));
+        } else {
+            // Prioritize known female Japanese voices
+            voice = voices.find(v => v.lang === lang && (v.name.includes("Ayumi") || v.name.includes("Haruka") || v.name.includes("Female")));
         }
 
-        // Final fallback: just use the best Japanese voice
+        // 2. If no gender-specific voice found, try Google's Japanese voice (usually female/neutral)
+        if (!voice && lang === "ja-JP") {
+            voice = voices.find(v => v.name.includes("Google 日本語"));
+        }
+
+        // 3. Fallback: just use any voice for that language
         if (!voice) {
-            voice = voices.find(v => v.lang === lang && (v.name.includes("Google") || v.name.includes("Microsoft")));
+            voice = voices.find(v => v.lang === lang);
         }
 
         if (voice) {
