@@ -11,7 +11,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[url('/images/tokyo_cherry_blossom.png')] bg-cover bg-center opacity-60 transition-opacity duration-700 group-hover:opacity-70 group-hover:scale-105"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
 
-        <div className="relative z-10 p-4 pt-24 md:p-12 text-white max-w-2xl w-full">
+        <div className="relative z-10 p-4 pt-8 md:p-12 text-white max-w-2xl w-full">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sakura-500/80 backdrop-blur-md text-xs font-bold mb-4">
             <span className="animate-pulse">●</span> START YOUR JOURNEY
           </div>
