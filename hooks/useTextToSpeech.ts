@@ -28,13 +28,18 @@ export function useTextToSpeech() {
     const speak = useCallback((text: string, lang: string = "ja-JP", gender: "male" | "female" = "female", speaker?: string) => {
         if (!isSupported || !text) return;
 
-        // Ensure voices are loaded (fallback for some browsers)
+        // Ensure voices are loaded (mobile fallback)
         let currentVoices = voices;
         if (currentVoices.length === 0 && typeof window !== "undefined") {
             currentVoices = window.speechSynthesis.getVoices();
         }
 
-        // Cancel any current utterance
+        // Android Chrome sometimes suspends synthesis; resume it.
+        if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+        }
+
+        // Cancel any current utterance (iOS requires this to prevent queueing without playing)
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
@@ -49,11 +54,11 @@ export function useTextToSpeech() {
             pitch = 0.9;
             rate = 1.0;
         } else if (speaker === "미유키") {
-            pitch = 1.1; // Slightly higher
-            rate = 1.05; // Slightly faster (energetic)
+            pitch = 1.1;
+            rate = 1.05;
         } else if (speaker === "이케야마") {
-            pitch = 0.75; // Deeper voice
-            rate = 0.9; // Slower, more deliberate
+            pitch = 0.75;
+            rate = 0.9;
         } else if (gender === "male") {
             pitch = 0.9;
         } else {
@@ -69,6 +74,7 @@ export function useTextToSpeech() {
 
         // Helper to check language match (loose)
         const isLangMatch = (v: SpeechSynthesisVoice) => {
+            if (!v.lang) return false;
             const vLang = v.lang.replace("_", "-");
             return vLang === normalizedLang || vLang.startsWith(normalizedLang.split("-")[0]);
         };
@@ -77,9 +83,13 @@ export function useTextToSpeech() {
 
         // 1. Try to assign specific voices to specific characters if multiple voices exist
         if (availableVoices.length > 0) {
-            // Check for known quality voices
-            const maleVoices = availableVoices.filter(v => v.name.includes("Ichiro") || v.name.includes("Male") || v.name.includes("Hattori"));
-            const femaleVoices = availableVoices.filter(v => v.name.includes("Ayumi") || v.name.includes("Haruka") || v.name.includes("Female") || v.name.includes("Kyoko") || v.name.includes("Google"));
+            // Check for known quality voices (iOS: Kyoko, Otoya; Android: Google)
+            const maleVoices = availableVoices.filter(v =>
+                v.name.includes("Ichiro") || v.name.includes("Male") || v.name.includes("Hattori") || v.name.includes("Otoya")
+            );
+            const femaleVoices = availableVoices.filter(v =>
+                v.name.includes("Ayumi") || v.name.includes("Haruka") || v.name.includes("Female") || v.name.includes("Kyoko") || v.name.includes("Google")
+            );
 
             // Simple hash function to get consistent index from string
             const getHashIndex = (str: string, max: number) => {
@@ -92,7 +102,6 @@ export function useTextToSpeech() {
 
             if (gender === "male") {
                 if (maleVoices.length > 0) {
-                    // Automatically assign a consistent male voice based on speaker name
                     if (speaker) {
                         const index = getHashIndex(speaker, maleVoices.length);
                         voice = maleVoices[index];
@@ -100,12 +109,10 @@ export function useTextToSpeech() {
                         voice = maleVoices[0];
                     }
                 } else {
-                    // Fallback to any voice if no specific male voice
-                    voice = availableVoices.find(v => !v.name.includes("Female") && !v.name.includes("Ayumi") && !v.name.includes("Haruka"));
+                    voice = availableVoices.find(v => !v.name.includes("Female") && !v.name.includes("Ayumi") && !v.name.includes("Kyoko"));
                 }
             } else {
                 if (femaleVoices.length > 0) {
-                    // Automatically assign a consistent female voice based on speaker name
                     if (speaker) {
                         const index = getHashIndex(speaker, femaleVoices.length);
                         voice = femaleVoices[index];
@@ -117,10 +124,12 @@ export function useTextToSpeech() {
         }
 
         // 2. Generic Fallback
-        if (!voice) {
+        if (!voice && availableVoices.length > 0) {
             voice = availableVoices[0];
         }
 
+        // 3. Fallback: If no voice found (empty list?), do NOT set utterance.voice
+        // This lets the browser use its internal default for the language.
         if (voice) {
             utterance.voice = voice;
         }
@@ -130,6 +139,7 @@ export function useTextToSpeech() {
         utterance.onerror = (e) => {
             console.error("TTS Error:", e);
             setIsPlaying(false);
+            // Retry once without voice if it failed? (Too complex for now)
         };
 
         window.speechSynthesis.speak(utterance);
