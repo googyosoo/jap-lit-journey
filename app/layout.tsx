@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Noto_Serif_JP } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
+import BGMPlayer from "@/components/BGMPlayer";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -40,6 +41,7 @@ export default function RootLayout({
             </div>
           </main>
         </div>
+        <BGMPlayer />
       </body>
     </html>
   );
