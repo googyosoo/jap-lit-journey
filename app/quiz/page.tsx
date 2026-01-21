@@ -445,7 +445,7 @@ export default function GlobalQuizPage() {
             </div>
 
             {/* Question Card */}
-            <main className="flex-1 max-w-2xl mx-auto w-full p-6 flex flex-col justify-center pb-32">
+            <main className="flex-1 max-w-2xl mx-auto w-full p-6 flex flex-col justify-center pb-48">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentIndex}
@@ -533,7 +533,7 @@ export default function GlobalQuizPage() {
                 </AnimatePresence>
 
                 {/* Next Button Area */}
-                <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur border-t border-stone-200 p-4 md:static md:bg-transparent md:border-0 md:p-0 md:mt-6 z-20">
+                <div className="fixed bottom-16 left-0 right-0 bg-white/90 backdrop-blur border-t border-stone-200 p-4 md:static md:bg-transparent md:border-0 md:p-0 md:mt-6 z-20">
                     <div className="max-w-2xl mx-auto flex items-center justify-end">
                         {isAnswered && (
                             <motion.button
