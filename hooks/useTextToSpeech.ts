@@ -35,11 +35,12 @@ export function useTextToSpeech() {
         }
 
         // Android Chrome sometimes suspends synthesis; resume it.
-        if (window.speechSynthesis.paused) {
+        // Important: check if it's paused or just not speaking
+        if (typeof window !== "undefined" && window.speechSynthesis.paused) {
             window.speechSynthesis.resume();
         }
 
-        // Cancel any current utterance (iOS requires this to prevent queueing without playing)
+        // Cancel any current utterance AND clear queue to preventing stacking
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
@@ -128,18 +129,39 @@ export function useTextToSpeech() {
             voice = availableVoices[0];
         }
 
-        // 3. Fallback: If no voice found (empty list?), do NOT set utterance.voice
-        // This lets the browser use its internal default for the language.
+        // 3. Fallback
         if (voice) {
             utterance.voice = voice;
         }
 
+        // GC Fix: Keep reference to utterance
+        // @ts-ignore
+        window.utterances = window.utterances || [];
+        // @ts-ignore
+        window.utterances.push(utterance);
+
         utterance.onstart = () => setIsPlaying(true);
-        utterance.onend = () => setIsPlaying(false);
+        utterance.onend = () => {
+            setIsPlaying(false);
+            // Clean up reference
+            // @ts-ignore
+            if (window.utterances) {
+                // @ts-ignore
+                const idx = window.utterances.indexOf(utterance);
+                // @ts-ignore
+                if (idx > -1) window.utterances.splice(idx, 1);
+            }
+        };
         utterance.onerror = (e) => {
             console.error("TTS Error:", e);
             setIsPlaying(false);
-            // Retry once without voice if it failed? (Too complex for now)
+            // @ts-ignore
+            if (window.utterances) {
+                // @ts-ignore
+                const idx = window.utterances.indexOf(utterance);
+                // @ts-ignore
+                if (idx > -1) window.utterances.splice(idx, 1);
+            }
         };
 
         window.speechSynthesis.speak(utterance);
