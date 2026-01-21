@@ -89,7 +89,7 @@ export default function ExerciseSection({ exercises, answers, onAnswer }: Exerci
                 </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 pb-24 md:pb-0">
                 {exercises.map((ex, idx) => {
                     const isAnswered = answers[idx] !== undefined;
                     const selected = answers[idx];
