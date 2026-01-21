@@ -67,8 +67,8 @@ export default function WordbookPage() {
     });
 
     return (
-        <div className="min-h-screen bg-stone-50 pb-20 pt-14 md:pt-0">
-            <div className="bg-white border-b border-stone-200 sticky top-14 md:top-0 z-20 shadow-sm">
+        <div className="min-h-screen bg-stone-50 pb-20 md:pt-0">
+            <div className="bg-white border-b border-stone-200 fixed top-14 left-0 right-0 z-20 shadow-sm md:relative md:top-0 md:left-auto md:right-auto">
                 <div className="max-w-4xl mx-auto px-6 py-4">
                     <div className="flex items-center gap-4 mb-4">
                         <Link href="/" className="p-2 hover:bg-stone-100 rounded-full transition-colors">
@@ -122,7 +122,7 @@ export default function WordbookPage() {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-6 py-8">
+            <div className="max-w-4xl mx-auto px-6 py-8 mt-72 md:mt-0">
                 <div className="flex justify-between items-center mb-6">
                     <p className="text-stone-500 font-medium">
                         {showBookmarksOnly ? "나만의 단어장: " : "전체 문형: "}
